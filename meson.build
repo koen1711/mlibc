@@ -319,6 +319,8 @@ elif host_machine.system() == 'ethereal'
 # ANCHOR: demo-sysdeps
 elif host_machine.system() == 'demo'
 	subdir('sysdeps/demo')
+elif host_machine.system() == 'HermesOS'
+	subdir('sysdeps/hermes')
 # ANCHOR_END: demo-sysdeps
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
