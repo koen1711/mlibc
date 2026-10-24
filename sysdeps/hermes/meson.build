@@ -70,7 +70,7 @@ if not headers_only
     )
 endif
 
-rtld_sources += files(
+rtld_dso_sources += files(
     'generic/generic.cpp',
     'generic/syscall.cpp',
 )
@@ -80,5 +80,8 @@ libc_sources += files(
     'generic/entry.cpp',
     'generic/generic.cpp',
     'generic/syscall.cpp',
+    'generic/thread.cpp',
+    'x86_64/signals.S',
+    'x86_64/thread_entry.S',
 )
 libc_include_dirs += include_directories('include')
