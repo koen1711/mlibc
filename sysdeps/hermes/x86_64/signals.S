@@ -4,7 +4,7 @@
 
 PROC_START(__mlibc_signal_restore)
 	mov $15, %rax
-	int $0x80
+	syscall
 	ud2
 PROC_END(__mlibc_signal_restore)
 

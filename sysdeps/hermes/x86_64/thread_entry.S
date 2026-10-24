@@ -7,7 +7,7 @@ PROC_START(__mlibc_spawn_thread)
 	/* clone(flags, stack, parent_tid, child_tid, tls): only rcx needs to move to r10 */
 	mov %rcx, %r10
 	mov $56, %rax
-	int $0x80
+	syscall
 	test %eax, %eax
 	jnz 1f
 	xor %ebp, %ebp
