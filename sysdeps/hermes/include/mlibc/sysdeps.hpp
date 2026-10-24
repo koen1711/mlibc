@@ -98,6 +98,14 @@ struct HermesSysdepTags :
 	GetThreadaffinity,
 	InetConfigured,
 #endif // __MLIBC_POSIX_OPTION
+#if __MLIBC_LINUX_EPOLL_OPTION
+	EpollCreate,
+	EpollCtl,
+	EpollPwait,
+#endif
+#if __MLIBC_LINUX_EVENTFD_OPTION
+	EventfdCreate,
+#endif
 
 	LibcPanic,
 	LibcLog,

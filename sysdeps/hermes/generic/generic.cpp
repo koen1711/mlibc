@@ -26,6 +26,10 @@
 #include <unistd.h>
 #endif
 
+#if __MLIBC_LINUX_EPOLL_OPTION && !MLIBC_BUILDING_RTLD
+#include <sys/epoll.h>
+#endif
+
 #include "syscallnos.h"
 
 #define ARCH_SET_FS 0x1002
@@ -957,6 +961,43 @@ int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
 }
 
 #endif // __MLIBC_POSIX_OPTION
+
+#if __MLIBC_LINUX_EPOLL_OPTION
+
+int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
+	auto r = do_syscall(SYS_epoll_create1, flags);
+	if (int e = sc_error(r))
+		return e;
+	*fd = r;
+	return 0;
+}
+
+int Sysdeps<EpollCtl>::operator()(int epfd, int mode, int fd, struct epoll_event *ev) {
+	return sc_error(do_syscall(SYS_epoll_ctl, epfd, mode, fd, ev));
+}
+
+int Sysdeps<EpollPwait>::operator()(int epfd, struct epoll_event *ev, int n, int timeout, const sigset_t *sigmask,
+		int *raised) {
+	auto r = do_syscall(SYS_epoll_pwait, epfd, ev, n, timeout, sigmask, sizeof(uint64_t));
+	if (int e = sc_error(r))
+		return e;
+	*raised = r;
+	return 0;
+}
+
+#endif // __MLIBC_LINUX_EPOLL_OPTION
+
+#if __MLIBC_LINUX_EVENTFD_OPTION
+
+int Sysdeps<EventfdCreate>::operator()(unsigned int initval, int flags, int *fd) {
+	auto r = do_syscall(SYS_eventfd2, initval, flags);
+	if (int e = sc_error(r))
+		return e;
+	*fd = r;
+	return 0;
+}
+
+#endif // __MLIBC_LINUX_EVENTFD_OPTION
 
 #endif // !MLIBC_BUILDING_RTLD
 

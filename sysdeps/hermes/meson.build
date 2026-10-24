@@ -1,5 +1,7 @@
 sysdep_supported_options = {
     'posix': true,
+    'linux-epoll': true,
+    'linux-eventfd': true,
 }
 
 if not no_headers
@@ -54,6 +56,7 @@ if not no_headers
         'include/abi-bits/sigset_t.h',
         'include/abi-bits/aio.h',
         'include/abi-bits/sched_param.h',
+        'include/abi-bits/epoll.h',
         subdir: 'abi-bits',
         follow_symlinks: true
     )

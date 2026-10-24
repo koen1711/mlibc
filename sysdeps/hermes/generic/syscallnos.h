@@ -140,5 +140,9 @@
 #define SYS_renameat2 316
 #define SYS_getrandom 318
 #define SYS_faccessat2 439
+#define SYS_epoll_ctl 233
+#define SYS_epoll_pwait 281
+#define SYS_eventfd2 290
+#define SYS_epoll_create1 291
 
 #endif /* _HERMES_SYSCALLNOS_H */
