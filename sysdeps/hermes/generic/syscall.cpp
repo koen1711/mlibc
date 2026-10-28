@@ -1,6 +1,7 @@
 #include <bits/syscall.h>
 #include <errno.h>
 
+#ifndef MLIBC_BUILDING_RTLD
 extern "C" long __do_syscall_ret(unsigned long ret) {
 	if (ret > -4096UL) {
 		errno = -ret;
@@ -8,6 +9,7 @@ extern "C" long __do_syscall_ret(unsigned long ret) {
 	}
 	return ret;
 }
+#endif
 
 using sc_word_t = __sc_word_t;
 
