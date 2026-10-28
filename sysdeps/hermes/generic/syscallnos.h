@@ -145,4 +145,33 @@
 #define SYS_eventfd2 290
 #define SYS_epoll_create1 291
 
+#define SYS_setreuid 113
+#define SYS_setregid 114
+#define SYS_setgroups 116
+#define SYS_setresuid 117
+#define SYS_getresuid 118
+#define SYS_setresgid 119
+#define SYS_getresgid 120
+#define SYS_statfs 137
+#define SYS_fstatfs 138
+#define SYS_getpriority 140
+#define SYS_setpriority 141
+#define SYS_sched_setparam 142
+#define SYS_sched_getparam 143
+#define SYS_sched_setscheduler 144
+#define SYS_sched_getscheduler 145
+#define SYS_sched_get_priority_max 146
+#define SYS_sched_get_priority_min 147
+#define SYS_chroot 161
+#define SYS_sched_setaffinity 203
+#define SYS_fadvise64 221
+#define SYS_clock_settime 227
+#define SYS_waitid 247
+#define SYS_mknodat 259
+#define SYS_fchownat 260
+#define SYS_linkat 265
+#define SYS_symlinkat 266
+#define SYS_fallocate 285
+#define SYS_memfd_create 319
+
 #endif /* _HERMES_SYSCALLNOS_H */

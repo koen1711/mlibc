@@ -19,10 +19,12 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/utsname.h>
 #include <termios.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #endif
 
@@ -958,6 +960,187 @@ int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
 	*ipv4 = true;
 	*ipv6 = false;
 	return 0;
+}
+
+int Sysdeps<ClockSet>::operator()(int clock, time_t secs, long nanos) {
+	struct timespec tp{};
+	tp.tv_sec = secs;
+	tp.tv_nsec = nanos;
+	return sc_status(do_syscall(SYS_clock_settime, clock, &tp));
+}
+
+namespace {
+
+struct kernel_statfs {
+	long f_type;
+	long f_bsize;
+	unsigned long f_blocks;
+	unsigned long f_bfree;
+	unsigned long f_bavail;
+	unsigned long f_files;
+	unsigned long f_ffree;
+	int f_fsid[2];
+	long f_namelen;
+	long f_frsize;
+	long f_flags;
+	long f_spare[4];
+};
+
+void statfs_to_statvfs(const kernel_statfs &from, struct statvfs *to) {
+	*to = {};
+	to->f_bsize = from.f_bsize;
+	to->f_frsize = from.f_frsize ? from.f_frsize : from.f_bsize;
+	to->f_blocks = from.f_blocks;
+	to->f_bfree = from.f_bfree;
+	to->f_bavail = from.f_bavail;
+	to->f_files = from.f_files;
+	to->f_ffree = from.f_ffree;
+	to->f_favail = from.f_ffree;
+	to->f_fsid = static_cast<unsigned int>(from.f_fsid[0]);
+	to->f_flag = from.f_flags;
+	to->f_namemax = from.f_namelen;
+}
+
+} // namespace
+
+int Sysdeps<Statvfs>::operator()(const char *path, struct statvfs *out) {
+	kernel_statfs buf;
+	if (int e = sc_error(do_syscall(SYS_statfs, path, &buf)))
+		return e;
+	statfs_to_statvfs(buf, out);
+	return 0;
+}
+
+int Sysdeps<Fstatvfs>::operator()(int fd, struct statvfs *out) {
+	kernel_statfs buf;
+	if (int e = sc_error(do_syscall(SYS_fstatfs, fd, &buf)))
+		return e;
+	statfs_to_statvfs(buf, out);
+	return 0;
+}
+
+int Sysdeps<Fallocate>::operator()(int fd, off_t offset, size_t size) {
+	return sc_status(do_syscall(SYS_fallocate, fd, 0, offset, size));
+}
+
+int Sysdeps<Fadvise>::operator()(int fd, off_t offset, off_t length, int advice) {
+	return sc_status(do_syscall(SYS_fadvise64, fd, offset, length, advice));
+}
+
+int Sysdeps<GetPriority>::operator()(int which, id_t who, int *value) {
+	auto r = do_syscall(SYS_getpriority, which, who);
+	if (int e = sc_error(r))
+		return e;
+	*value = 20 - static_cast<int>(r);
+	return 0;
+}
+
+int Sysdeps<SetPriority>::operator()(int which, id_t who, int prio) {
+	return sc_status(do_syscall(SYS_setpriority, which, who, prio));
+}
+
+int Sysdeps<GetScheduler>::operator()(pid_t pid, int *policy) {
+	auto r = do_syscall(SYS_sched_getscheduler, pid);
+	if (int e = sc_error(r))
+		return e;
+	*policy = static_cast<int>(r);
+	return 0;
+}
+
+int Sysdeps<SetScheduler>::operator()(pid_t pid, int policy, const struct sched_param *param) {
+	return sc_status(do_syscall(SYS_sched_setscheduler, pid, policy, param));
+}
+
+int Sysdeps<GetParam>::operator()(pid_t pid, struct sched_param *param) {
+	return sc_status(do_syscall(SYS_sched_getparam, pid, param));
+}
+
+int Sysdeps<SetParam>::operator()(pid_t pid, const struct sched_param *param) {
+	return sc_status(do_syscall(SYS_sched_setparam, pid, param));
+}
+
+int Sysdeps<GetMaxPriority>::operator()(int policy, int *out) {
+	auto r = do_syscall(SYS_sched_get_priority_max, policy);
+	if (int e = sc_error(r))
+		return e;
+	*out = static_cast<int>(r);
+	return 0;
+}
+
+int Sysdeps<GetMinPriority>::operator()(int policy, int *out) {
+	auto r = do_syscall(SYS_sched_get_priority_min, policy);
+	if (int e = sc_error(r))
+		return e;
+	*out = static_cast<int>(r);
+	return 0;
+}
+
+int Sysdeps<Chroot>::operator()(const char *path) {
+	return sc_status(do_syscall(SYS_chroot, path));
+}
+
+int Sysdeps<Linkat>::operator()(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
+	return sc_status(do_syscall(SYS_linkat, olddirfd, old_path, newdirfd, new_path, flags));
+}
+
+int Sysdeps<Symlinkat>::operator()(const char *target_path, int dirfd, const char *link_path) {
+	return sc_status(do_syscall(SYS_symlinkat, target_path, dirfd, link_path));
+}
+
+int Sysdeps<Mkfifoat>::operator()(int dirfd, const char *path, mode_t mode) {
+	return sysdep<Mknodat>(dirfd, path, mode | S_IFIFO, 0);
+}
+
+int Sysdeps<Mknodat>::operator()(int dirfd, const char *path, int mode, int dev) {
+	return sc_status(do_syscall(SYS_mknodat, dirfd, path, mode, dev));
+}
+
+int Sysdeps<Fchownat>::operator()(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
+	return sc_status(do_syscall(SYS_fchownat, dirfd, pathname, owner, group, flags));
+}
+
+int Sysdeps<SetGroups>::operator()(size_t size, const gid_t *list) {
+	return sc_status(do_syscall(SYS_setgroups, size, list));
+}
+
+int Sysdeps<MemfdCreate>::operator()(const char *name, int flags, int *fd) {
+	auto r = do_syscall(SYS_memfd_create, name, flags);
+	if (int e = sc_error(r))
+		return e;
+	*fd = static_cast<int>(r);
+	return 0;
+}
+
+int Sysdeps<SetResuid>::operator()(uid_t ruid, uid_t euid, uid_t suid) {
+	return sc_status(do_syscall(SYS_setresuid, ruid, euid, suid));
+}
+
+int Sysdeps<SetResgid>::operator()(gid_t rgid, gid_t egid, gid_t sgid) {
+	return sc_status(do_syscall(SYS_setresgid, rgid, egid, sgid));
+}
+
+int Sysdeps<GetResuid>::operator()(uid_t *ruid, uid_t *euid, uid_t *suid) {
+	return sc_status(do_syscall(SYS_getresuid, ruid, euid, suid));
+}
+
+int Sysdeps<GetResgid>::operator()(gid_t *rgid, gid_t *egid, gid_t *sgid) {
+	return sc_status(do_syscall(SYS_getresgid, rgid, egid, sgid));
+}
+
+int Sysdeps<SetReuid>::operator()(uid_t ruid, uid_t euid) {
+	return sc_status(do_syscall(SYS_setreuid, ruid, euid));
+}
+
+int Sysdeps<SetRegid>::operator()(gid_t rgid, gid_t egid) {
+	return sc_status(do_syscall(SYS_setregid, rgid, egid));
+}
+
+int Sysdeps<SetThreadaffinity>::operator()(pid_t tid, size_t cpusetsize, const cpu_set_t *mask) {
+	return sc_status(do_syscall(SYS_sched_setaffinity, tid, cpusetsize, mask));
+}
+
+int Sysdeps<Waitid>::operator()(idtype_t idtype, id_t id, siginfo_t *info, int options) {
+	return sc_status(do_syscall(SYS_waitid, idtype, id, info, options, 0));
 }
 
 #endif // __MLIBC_POSIX_OPTION
