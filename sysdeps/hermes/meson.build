@@ -1,5 +1,8 @@
 sysdep_supported_options = {
     'posix': true,
+    'linux': true,
+    'glibc': true,
+    'bsd': true,
     'linux-epoll': true,
     'linux-eventfd': true,
 }
@@ -57,6 +60,18 @@ if not no_headers
         'include/abi-bits/aio.h',
         'include/abi-bits/sched_param.h',
         'include/abi-bits/epoll.h',
+        'include/abi-bits/clone-flags.h',
+        'include/abi-bits/inotify.h',
+        'include/abi-bits/ioctls.h',
+        'include/abi-bits/packet.h',
+        'include/abi-bits/ptrace.h',
+        'include/abi-bits/random.h',
+        'include/abi-bits/reboot.h',
+        'include/abi-bits/route.h',
+        'include/abi-bits/statfs.h',
+        'include/abi-bits/statx.h',
+        'include/abi-bits/vt.h',
+        'include/abi-bits/xattr.h',
         subdir: 'abi-bits',
         follow_symlinks: true
     )
