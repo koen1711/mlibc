@@ -126,7 +126,17 @@ struct HermesSysdepTags :
 	SetRegid,
 	SetThreadaffinity,
 	Waitid,
+	VmRemap,
+	Splice,
+	SetAffinity,
+	SetEuid,
+	SetEgid,
+	GetSchedparam,
+	SetSchedparam,
 #endif // __MLIBC_POSIX_OPTION
+#if __MLIBC_BSD_OPTION
+	Brk,
+#endif
 #if __MLIBC_LINUX_OPTION
 	Setxattr,
 	Lsetxattr,
@@ -140,6 +150,14 @@ struct HermesSysdepTags :
 	Removexattr,
 	Lremovexattr,
 	Fremovexattr,
+	Sysinfo,
+	Prctl,
+	Statfs,
+	Fstatfs,
+	Sendfile,
+	PidfdOpen,
+	CopyFileRange,
+	Renameat2,
 #endif
 #if __MLIBC_LINUX_EPOLL_OPTION
 	EpollCreate,

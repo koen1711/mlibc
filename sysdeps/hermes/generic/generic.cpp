@@ -28,6 +28,11 @@
 #include <unistd.h>
 #endif
 
+#if __MLIBC_LINUX_OPTION && !MLIBC_BUILDING_RTLD
+#include <sys/statfs.h>
+#include <sys/sysinfo.h>
+#endif
+
 #if __MLIBC_LINUX_EPOLL_OPTION && !MLIBC_BUILDING_RTLD
 #include <sys/epoll.h>
 #endif
@@ -47,6 +52,8 @@
 #define CLONE_SYSVSEM 0x00040000
 #define CLONE_SETTLS 0x00080000
 #define CLONE_PARENT_SETTID 0x00100000
+
+#define MREMAP_MAYMOVE 1
 
 #define TCGETS 0x5401
 #define TCSETS 0x5402
@@ -1143,7 +1150,72 @@ int Sysdeps<Waitid>::operator()(idtype_t idtype, id_t id, siginfo_t *info, int o
 	return sc_status(do_syscall(SYS_waitid, idtype, id, info, options, 0));
 }
 
+int Sysdeps<VmRemap>::operator()(void *pointer, size_t size, size_t new_size, void **window) {
+	auto r = do_syscall(SYS_mremap, pointer, size, new_size, MREMAP_MAYMOVE);
+	if (int e = sc_error(r))
+		return e;
+	*window = reinterpret_cast<void *>(r);
+	return 0;
+}
+
+int Sysdeps<Splice>::operator()(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size, unsigned int flags,
+		ssize_t *out) {
+	auto r = do_syscall(SYS_splice, in_fd, in_off, out_fd, out_off, size, flags);
+	if (int e = sc_error(r))
+		return e;
+	*out = r;
+	return 0;
+}
+
+int Sysdeps<SetAffinity>::operator()(pid_t pid, size_t cpusetsize, const cpu_set_t *mask) {
+	return sc_status(do_syscall(SYS_sched_setaffinity, pid, cpusetsize, mask));
+}
+
+int Sysdeps<SetEuid>::operator()(uid_t euid) {
+	return sysdep<SetResuid>(-1, euid, -1);
+}
+
+int Sysdeps<SetEgid>::operator()(gid_t egid) {
+	return sysdep<SetResgid>(-1, egid, -1);
+}
+
+int Sysdeps<GetSchedparam>::operator()(void *tcb, int *policy, struct sched_param *param) {
+	auto t = reinterpret_cast<Tcb *>(tcb);
+	if (!t->tid)
+		return ESRCH;
+	if (!param)
+		return EINVAL;
+	if (int e = sc_error(do_syscall(SYS_sched_getparam, t->tid, param)))
+		return e;
+	auto r = do_syscall(SYS_sched_getscheduler, t->tid);
+	if (int e = sc_error(r))
+		return e;
+	*policy = r;
+	return 0;
+}
+
+int Sysdeps<SetSchedparam>::operator()(void *tcb, int policy, const struct sched_param *param) {
+	auto t = reinterpret_cast<Tcb *>(tcb);
+	if (!t->tid)
+		return ESRCH;
+	if (!param)
+		return EINVAL;
+	return sc_status(do_syscall(SYS_sched_setscheduler, t->tid, policy, param));
+}
+
 #endif // __MLIBC_POSIX_OPTION
+
+#if __MLIBC_BSD_OPTION
+
+int Sysdeps<Brk>::operator()(void **out) {
+	auto r = do_syscall(SYS_brk, 0);
+	if (int e = sc_error(r))
+		return e;
+	*out = reinterpret_cast<void *>(r);
+	return 0;
+}
+
+#endif // __MLIBC_BSD_OPTION
 
 #if __MLIBC_LINUX_OPTION
 
@@ -1217,6 +1289,59 @@ int Sysdeps<Lremovexattr>::operator()(const char *path, const char *name) {
 
 int Sysdeps<Fremovexattr>::operator()(int fd, const char *name) {
 	return sc_status(do_syscall(SYS_fremovexattr, fd, name));
+}
+
+int Sysdeps<Sysinfo>::operator()(struct sysinfo *info) {
+	return sc_status(do_syscall(SYS_sysinfo, info));
+}
+
+int Sysdeps<Prctl>::operator()(int option, va_list va, int *out) {
+	unsigned long x[4];
+	for (int i = 0; i < 4; i++)
+		x[i] = va_arg(va, unsigned long);
+	auto r = do_syscall(SYS_prctl, option, x[0], x[1], x[2], x[3]);
+	if (int e = sc_error(r))
+		return e;
+	*out = r;
+	return 0;
+}
+
+int Sysdeps<Statfs>::operator()(const char *path, struct statfs *buf) {
+	return sc_status(do_syscall(SYS_statfs, path, buf));
+}
+
+int Sysdeps<Fstatfs>::operator()(int fd, struct statfs *buf) {
+	return sc_status(do_syscall(SYS_fstatfs, fd, buf));
+}
+
+int Sysdeps<Sendfile>::operator()(int outfd, int infd, off_t *offset, size_t count, ssize_t *out) {
+	auto r = do_syscall(SYS_sendfile, outfd, infd, offset, count);
+	if (int e = sc_error(r))
+		return e;
+	*out = r;
+	return 0;
+}
+
+int Sysdeps<PidfdOpen>::operator()(pid_t pid, unsigned int flags, int *outfd) {
+	auto r = do_syscall(SYS_pidfd_open, pid, flags);
+	if (int e = sc_error(r))
+		return e;
+	*outfd = r;
+	return 0;
+}
+
+int Sysdeps<CopyFileRange>::operator()(int fd_in, off_t *off_in, int fd_out, off_t *off_out, size_t count,
+		unsigned int flags, ssize_t *bytes_copied) {
+	auto r = do_syscall(SYS_copy_file_range, fd_in, off_in, fd_out, off_out, count, flags);
+	if (int e = sc_error(r))
+		return e;
+	*bytes_copied = r;
+	return 0;
+}
+
+int Sysdeps<Renameat2>::operator()(int olddirfd, const char *old_path, int newdirfd, const char *new_path,
+		unsigned int flags) {
+	return sc_status(do_syscall(SYS_renameat2, olddirfd, old_path, newdirfd, new_path, flags));
 }
 
 #endif // __MLIBC_LINUX_OPTION

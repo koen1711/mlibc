@@ -185,5 +185,20 @@
 #define SYS_symlinkat 266
 #define SYS_fallocate 285
 #define SYS_memfd_create 319
+#define SYS_lchown 94
+#define SYS_mknod 133
+#define SYS_sched_rr_get_interval 148
+#define SYS_epoll_create 213
+#define SYS_epoll_wait 232
+#define SYS_splice 275
+#define SYS_eventfd 284
+#define SYS_preadv 295
+#define SYS_pwritev 296
+#define SYS_copy_file_range 326
+#define SYS_preadv2 327
+#define SYS_pwritev2 328
+#define SYS_pidfd_open 434
+#define SYS_close_range 436
+#define SYS_epoll_pwait2 441
 
 #endif /* _HERMES_SYSCALLNOS_H */
