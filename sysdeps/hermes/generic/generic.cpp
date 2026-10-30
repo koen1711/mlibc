@@ -1145,6 +1145,82 @@ int Sysdeps<Waitid>::operator()(idtype_t idtype, id_t id, siginfo_t *info, int o
 
 #endif // __MLIBC_POSIX_OPTION
 
+#if __MLIBC_LINUX_OPTION
+
+int Sysdeps<Setxattr>::operator()(const char *path, const char *name, const void *val, size_t size, int flags) {
+	return sc_status(do_syscall(SYS_setxattr, path, name, val, size, flags));
+}
+
+int Sysdeps<Lsetxattr>::operator()(const char *path, const char *name, const void *val, size_t size, int flags) {
+	return sc_status(do_syscall(SYS_lsetxattr, path, name, val, size, flags));
+}
+
+int Sysdeps<Fsetxattr>::operator()(int fd, const char *name, const void *val, size_t size, int flags) {
+	return sc_status(do_syscall(SYS_fsetxattr, fd, name, val, size, flags));
+}
+
+int Sysdeps<Getxattr>::operator()(const char *path, const char *name, void *val, size_t size, ssize_t *nread) {
+	auto r = do_syscall(SYS_getxattr, path, name, val, size);
+	if (int e = sc_error(r))
+		return e;
+	*nread = r;
+	return 0;
+}
+
+int Sysdeps<Lgetxattr>::operator()(const char *path, const char *name, void *val, size_t size, ssize_t *nread) {
+	auto r = do_syscall(SYS_lgetxattr, path, name, val, size);
+	if (int e = sc_error(r))
+		return e;
+	*nread = r;
+	return 0;
+}
+
+int Sysdeps<Fgetxattr>::operator()(int fd, const char *name, void *val, size_t size, ssize_t *nread) {
+	auto r = do_syscall(SYS_fgetxattr, fd, name, val, size);
+	if (int e = sc_error(r))
+		return e;
+	*nread = r;
+	return 0;
+}
+
+int Sysdeps<Listxattr>::operator()(const char *path, char *list, size_t size, ssize_t *nread) {
+	auto r = do_syscall(SYS_listxattr, path, list, size);
+	if (int e = sc_error(r))
+		return e;
+	*nread = r;
+	return 0;
+}
+
+int Sysdeps<Llistxattr>::operator()(const char *path, char *list, size_t size, ssize_t *nread) {
+	auto r = do_syscall(SYS_llistxattr, path, list, size);
+	if (int e = sc_error(r))
+		return e;
+	*nread = r;
+	return 0;
+}
+
+int Sysdeps<Flistxattr>::operator()(int fd, char *list, size_t size, ssize_t *nread) {
+	auto r = do_syscall(SYS_flistxattr, fd, list, size);
+	if (int e = sc_error(r))
+		return e;
+	*nread = r;
+	return 0;
+}
+
+int Sysdeps<Removexattr>::operator()(const char *path, const char *name) {
+	return sc_status(do_syscall(SYS_removexattr, path, name));
+}
+
+int Sysdeps<Lremovexattr>::operator()(const char *path, const char *name) {
+	return sc_status(do_syscall(SYS_lremovexattr, path, name));
+}
+
+int Sysdeps<Fremovexattr>::operator()(int fd, const char *name) {
+	return sc_status(do_syscall(SYS_fremovexattr, fd, name));
+}
+
+#endif // __MLIBC_LINUX_OPTION
+
 #if __MLIBC_LINUX_EPOLL_OPTION
 
 int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
