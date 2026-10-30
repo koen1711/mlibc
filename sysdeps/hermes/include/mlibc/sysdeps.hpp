@@ -127,6 +127,20 @@ struct HermesSysdepTags :
 	SetThreadaffinity,
 	Waitid,
 #endif // __MLIBC_POSIX_OPTION
+#if __MLIBC_LINUX_OPTION
+	Setxattr,
+	Lsetxattr,
+	Fsetxattr,
+	Getxattr,
+	Lgetxattr,
+	Fgetxattr,
+	Listxattr,
+	Llistxattr,
+	Flistxattr,
+	Removexattr,
+	Lremovexattr,
+	Fremovexattr,
+#endif
 #if __MLIBC_LINUX_EPOLL_OPTION
 	EpollCreate,
 	EpollCtl,
