@@ -901,6 +901,9 @@ int Sysdeps<ThreadSetname>::operator()(void *tcb, const char *name) {
 
 int Sysdeps<Sysconf>::operator()(int num, long *ret) {
 	switch (num) {
+		case _SC_CLK_TCK:
+			*ret = 100;
+			return 0;
 		case _SC_OPEN_MAX: {
 			struct rlimit rl;
 			if (int e = sysdep<GetRlimit>(RLIMIT_NOFILE, &rl))
