@@ -320,6 +320,7 @@ elif host_machine.system() == 'ethereal'
 elif host_machine.system() == 'demo'
 	subdir('sysdeps/demo')
 elif host_machine.system() == 'HermesOS'
+	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	subdir('sysdeps/hermes')
 # ANCHOR_END: demo-sysdeps
 else
