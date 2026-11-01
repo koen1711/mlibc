@@ -166,6 +166,9 @@ struct HermesSysdepTags :
 #endif
 #if __MLIBC_LINUX_EVENTFD_OPTION
 	EventfdCreate,
+	InotifyCreate,
+	InotifyAddWatch,
+	InotifyRmWatch,
 #endif
 
 	LibcPanic,

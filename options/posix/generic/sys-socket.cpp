@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <sys/socket.h>
+#include <time.h>
 
 #include <bits/ensure.h>
 #include <mlibc/all-sysdeps.hpp>
@@ -127,9 +128,40 @@ ssize_t recvmsg(int fd, struct msghdr *hdr, int flags) {
 	return length;
 }
 
-int recvmmsg(int, struct mmsghdr *, unsigned int, int, struct timespec *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int recvmmsg(int fd, struct mmsghdr *msgs, unsigned int vlen, int flags, struct timespec *timeout) {
+	struct timespec deadline = {};
+	if(timeout) {
+		if(clock_gettime(CLOCK_MONOTONIC, &deadline))
+			return -1;
+		deadline.tv_sec += timeout->tv_sec;
+		deadline.tv_nsec += timeout->tv_nsec;
+		if(deadline.tv_nsec >= 1000000000) {
+			deadline.tv_sec++;
+			deadline.tv_nsec -= 1000000000;
+		}
+	}
+
+	const bool wait_for_one = flags & MSG_WAITFORONE;
+	flags &= ~MSG_WAITFORONE;
+
+	unsigned int done = 0;
+	while(done < vlen) {
+		ssize_t n = recvmsg(fd, &msgs[done].msg_hdr, flags);
+		if(n < 0)
+			return done ? static_cast<int>(done) : -1;
+		msgs[done++].msg_len = n;
+		if(wait_for_one)
+			flags |= MSG_DONTWAIT;
+		if(timeout) {
+			struct timespec now;
+			if(clock_gettime(CLOCK_MONOTONIC, &now))
+				break;
+			if(now.tv_sec > deadline.tv_sec
+					|| (now.tv_sec == deadline.tv_sec && now.tv_nsec >= deadline.tv_nsec))
+				break;
+		}
+	}
+	return done;
 }
 
 ssize_t send(int fd, const void *buffer, size_t size, int flags) {
@@ -174,9 +206,15 @@ ssize_t sendmsg(int fd, const struct msghdr *hdr, int flags) {
 	return length;
 }
 
-int sendmmsg(int, struct mmsghdr *, unsigned int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int sendmmsg(int fd, struct mmsghdr *msgs, unsigned int vlen, int flags) {
+	unsigned int done = 0;
+	while(done < vlen) {
+		ssize_t n = sendmsg(fd, &msgs[done].msg_hdr, flags);
+		if(n < 0)
+			return done ? static_cast<int>(done) : -1;
+		msgs[done++].msg_len = n;
+	}
+	return done;
 }
 
 int setsockopt(int fd, int layer, int number,

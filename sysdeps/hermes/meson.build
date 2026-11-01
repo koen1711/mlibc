@@ -77,6 +77,19 @@ if not no_headers
     )
 endif
 
+provides_bits_syscall_h = true
+
+if not no_headers
+    install_headers('include/syscall.h')
+    install_headers('include/sys/syscall.h', subdir: 'sys', follow_symlinks: true)
+    install_headers(
+        'include/bits/syscall.h',
+        'include/bits/syscall_aliases.h',
+        subdir: 'bits',
+        follow_symlinks: true
+    )
+endif
+
 if not headers_only
     crt = custom_target('crt1',
                         build_by_default: true,

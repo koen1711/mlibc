@@ -1,5 +1,6 @@
 #include <bits/syscall.h>
 #include <errno.h>
+#include <stdarg.h>
 
 #ifndef MLIBC_BUILDING_RTLD
 extern "C" long __do_syscall_ret(unsigned long ret) {
@@ -8,6 +9,20 @@ extern "C" long __do_syscall_ret(unsigned long ret) {
 		return -1;
 	}
 	return ret;
+}
+
+extern "C" long __mlibc_syscall_symbol(long n, ...) __asm__("syscall");
+extern "C" [[gnu::visibility("default")]] long __mlibc_syscall_symbol(long n, ...) {
+	va_list ap;
+	va_start(ap, n);
+	long a0 = va_arg(ap, long);
+	long a1 = va_arg(ap, long);
+	long a2 = va_arg(ap, long);
+	long a3 = va_arg(ap, long);
+	long a4 = va_arg(ap, long);
+	long a5 = va_arg(ap, long);
+	va_end(ap);
+	return __do_syscall_ret(__do_syscall6(n, a0, a1, a2, a3, a4, a5));
 }
 #endif
 

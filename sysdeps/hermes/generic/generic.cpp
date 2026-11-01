@@ -1376,6 +1376,26 @@ int Sysdeps<EpollPwait>::operator()(int epfd, struct epoll_event *ev, int n, int
 
 #if __MLIBC_LINUX_EVENTFD_OPTION
 
+int Sysdeps<InotifyCreate>::operator()(int flags, int *fd) {
+	auto r = do_syscall(SYS_inotify_init1, flags);
+	if (int e = sc_error(r))
+		return e;
+	*fd = r;
+	return 0;
+}
+
+int Sysdeps<InotifyAddWatch>::operator()(int ifd, const char *path, uint32_t mask, int *wd) {
+	auto r = do_syscall(SYS_inotify_add_watch, ifd, path, mask);
+	if (int e = sc_error(r))
+		return e;
+	*wd = r;
+	return 0;
+}
+
+int Sysdeps<InotifyRmWatch>::operator()(int ifd, int wd) {
+	return sc_status(do_syscall(SYS_inotify_rm_watch, ifd, wd));
+}
+
 int Sysdeps<EventfdCreate>::operator()(unsigned int initval, int flags, int *fd) {
 	auto r = do_syscall(SYS_eventfd2, initval, flags);
 	if (int e = sc_error(r))

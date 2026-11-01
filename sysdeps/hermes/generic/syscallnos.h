@@ -155,6 +155,9 @@
 #define SYS_epoll_ctl 233
 #define SYS_epoll_pwait 281
 #define SYS_eventfd2 290
+#define SYS_inotify_add_watch 254
+#define SYS_inotify_rm_watch 255
+#define SYS_inotify_init1 294
 #define SYS_epoll_create1 291
 
 #define SYS_setreuid 113
