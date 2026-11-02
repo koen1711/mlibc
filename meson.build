@@ -598,7 +598,15 @@ if not headers_only
 		libgcc_path = run_command(cpp_compiler.cmd_array(), cpp_link_args, '-print-libgcc-file-name',
 							capture: true, check: true).stdout().strip()
 
-		if not fs.is_file(libgcc_path)
+		# On MSYS2 the (native Windows) compiler reports a C:/ path, which meson's
+		# POSIX python treats as relative; convert it before checking existence.
+		libgcc_check_path = libgcc_path
+		cygpath = find_program('cygpath', required: false, native: true)
+		if cygpath.found()
+			libgcc_check_path = run_command(cygpath, '-u', libgcc_path, check: true).stdout().strip()
+		endif
+
+		if not fs.is_file(libgcc_check_path)
 			error('libgcc/compiler-rt library (' + libgcc_path + ') is missing')
 		endif
 
