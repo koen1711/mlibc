@@ -72,6 +72,9 @@ int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *__restrict __fi
 int posix_spawn_file_actions_addchdir(
     posix_spawn_file_actions_t *__restrict __file_actions, const char *__restrict __path
 );
+int posix_spawn_file_actions_addchdir_np(
+    posix_spawn_file_actions_t *__restrict __file_actions, const char *__restrict __path
+);
 int posix_spawn_file_actions_addfchdir(posix_spawn_file_actions_t *__file_actions, int __fildes);
 
 int posix_spawnp(pid_t *__restrict __pid, const char *__restrict __file,

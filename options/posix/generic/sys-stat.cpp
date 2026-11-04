@@ -101,11 +101,6 @@ mode_t umask(mode_t mode) {
 }
 
 int utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
-	if(pathname == nullptr) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	if (int e = mlibc::sysdep_or_enosys<Utimensat>(dirfd, pathname, times, flags); e) {
 		errno = e;
 		return -1;

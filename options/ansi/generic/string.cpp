@@ -620,3 +620,7 @@ int strerror_r(int e, char *buffer, size_t bufsz) {
 		return ERANGE;
 	return 0;
 }
+
+extern "C" int __xpg_strerror_r(int e, char *buffer, size_t bufsz) {
+	return strerror_r(e, buffer, bufsz);
+}

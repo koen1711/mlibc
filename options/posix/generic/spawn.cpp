@@ -482,6 +482,12 @@ int posix_spawn_file_actions_addchdir(
 	return 0;
 }
 
+int posix_spawn_file_actions_addchdir_np(
+    posix_spawn_file_actions_t *__restrict file_actions, const char *__restrict path
+) {
+	return posix_spawn_file_actions_addchdir(file_actions, path);
+}
+
 int posix_spawn_file_actions_addfchdir(posix_spawn_file_actions_t *file_actions, int fildes) {
 	// POSIX-mandated fd check
 	if (fildes < 0)
